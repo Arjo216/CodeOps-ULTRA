@@ -97,7 +97,7 @@ python init_rag.py
 # Start the API Server
 uvicorn server_api:app --host 127.0.0.1 --port 8000 --reload
 ```
-3. Frontend Setup
+### 3. Frontend Setup
 ```Bash
 cd ../frontend
 npm install
@@ -106,11 +106,11 @@ npm run dev
 Visit *http://localhost:3000* to access the Mission Control Dashboard.
 
 ### 📋 Example Use Cases
-## Secure Web Scraping: Fetch news headlines or stock data without risking local system integrity.
+* Secure Web Scraping: Fetch news headlines or stock data without risking local system integrity.
 
-## Enterprise Data Analysis: Upload CSVs and generate verified visualization code that never leaves the organization.
+* Enterprise Data Analysis: Upload CSVs and generate verified visualization code that never leaves the organization.
 
-## Policy Enforcement: Automatically add "Verified" headers and security comments to every internal script.
+* Policy Enforcement: Automatically add "Verified" headers and security comments to every internal script.
 
 ### 🎓 Academic Credits
 Developed as a Senior B-Tech Project focusing on the intersection of AI Agents, Vector Databases, and Containerized Security.
