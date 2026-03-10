@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  db:
+    image: pgvector/pgvector:pg15
+    restart: always
+    environment:
+      POSTGRES_USER: ultra_admin
+      POSTGRES_PASSWORD: ultra_secure_password
+      POSTGRES_DB: codeops_memory
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
