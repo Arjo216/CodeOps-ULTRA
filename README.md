@@ -83,17 +83,17 @@ graph TD
     classDef network fill:#171717,stroke:#a3a3a3,stroke-width:2px,color:#fff,stroke-dasharray: 5 5,rx:8px,ry:8px
 
     %% Client Layer
-    User(("🧑‍💻 User Input\n(Prompt & CSV)")):::client
-    UI["🖥️ Next.js Mission Control\n(React / Tailwind)"]:::client
+    User(("🧑‍💻 User Input<br/>(Prompt & CSV)")):::client
+    UI["🖥️ Next.js Mission Control<br/>(React / Tailwind)"]:::client
 
     %% API Gateway
-    API["⚡ FastAPI Gateway\n(uvicorn / REST)"]:::gateway
+    API["⚡ FastAPI Gateway<br/>(uvicorn / REST)"]:::gateway
 
     %% Cognitive / Multi-Agent Layer
     subgraph Cognitive["🧠 Multi-Agent Orchestration (LangGraph)"]
         direction LR
-        Dev["👨‍💻 Developer Agent\n(Llama 3.3 70B)"]:::agent
-        QA["🕵️‍♂️ QA Auditor Agent\n(Security Review)"]:::agent
+        Dev["👨‍💻 Developer Agent<br/>(Llama 3.3 70B)"]:::agent
+        QA["🕵️‍♂️ QA Auditor Agent<br/>(Security Review)"]:::agent
         Dev -->|Submits Code| QA
         QA -.->|Rejects Code| Dev
     end
@@ -101,22 +101,22 @@ graph TD
     %% RAG & Memory Storage
     subgraph Storage["🗄️ Zero-Trust Storage & Memory"]
         direction TB
-        VectorDB[("🗂️ Vector DB\n(PostgreSQL + pgvector)")]:::db
-        HistoryDB[("📜 Audit History Vault\n(PostgreSQL)")]:::db
+        VectorDB[("🗂️ Vector DB<br/>(PostgreSQL + pgvector)")]:::db
+        HistoryDB[("📜 Audit History Vault<br/>(PostgreSQL)")]:::db
     end
 
     %% Hardened Execution Environment
     subgraph Execution["🏗️ Secure Execution Engine"]
         direction TB
         Docker["🐳 Docker Daemon"]:::docker
-        Sandbox["📦 Ephemeral Container\n(python:3.9-slim)"]:::docker
-        Limits>["⚠️ Hardware Kill-Switch:\n512MB RAM | 10s Timeout"]:::db
+        Sandbox["📦 Ephemeral Container<br/>(python:3.9-slim)"]:::docker
+        Limits{{"⚠️ Hardware Kill-Switch:<br/>512MB RAM | 10s Timeout"}}:::db
         Docker --- Sandbox
         Sandbox --- Limits
     end
 
     %% External Internet
-    Internet(("🌐 Open Internet\n(Web Scraping APIs)")):::network
+    Internet(("🌐 Open Internet<br/>(Web Scraping APIs)")):::network
 
     %% Flow Connections
     User -->|Initiates Mission| UI
