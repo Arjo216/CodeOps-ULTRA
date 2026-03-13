@@ -83,17 +83,17 @@ graph TD
     classDef network fill:#171717,stroke:#a3a3a3,stroke-width:2px,color:#fff,stroke-dasharray: 5 5,rx:8px,ry:8px
 
     %% Client Layer
-    User(("🧑‍💻 User Input<br/>(Prompt & CSV)")):::client
-    UI["🖥️ Next.js Mission Control<br/>(React / Tailwind)"]:::client
+    User["🧑‍💻 User Input<br>Prompt and CSV"]:::client
+    UI["🖥️ Next.js Mission Control<br>React and Tailwind"]:::client
 
     %% API Gateway
-    API["⚡ FastAPI Gateway<br/>(uvicorn / REST)"]:::gateway
+    API["⚡ FastAPI Gateway<br>uvicorn and REST"]:::gateway
 
     %% Cognitive / Multi-Agent Layer
-    subgraph Cognitive["🧠 Multi-Agent Orchestration (LangGraph)"]
+    subgraph Cognitive["🧠 Multi-Agent Orchestration"]
         direction LR
-        Dev["👨‍💻 Developer Agent<br/>(Llama 3.3 70B)"]:::agent
-        QA["🕵️‍♂️ QA Auditor Agent<br/>(Security Review)"]:::agent
+        Dev["👨‍💻 Developer Agent<br>Llama 3.3 70B"]:::agent
+        QA["🕵️‍♂️ QA Auditor Agent<br>Security Review"]:::agent
         Dev -->|Submits Code| QA
         QA -.->|Rejects Code| Dev
     end
@@ -101,39 +101,39 @@ graph TD
     %% RAG & Memory Storage
     subgraph Storage["🗄️ Zero-Trust Storage & Memory"]
         direction TB
-        VectorDB[("🗂️ Vector DB<br/>(PostgreSQL + pgvector)")]:::db
-        HistoryDB[("📜 Audit History Vault<br/>(PostgreSQL)")]:::db
+        VectorDB["🗂️ Vector DB<br>PostgreSQL and pgvector"]:::db
+        HistoryDB["📜 Audit History Vault<br>PostgreSQL"]:::db
     end
 
     %% Hardened Execution Environment
     subgraph Execution["🏗️ Secure Execution Engine"]
         direction TB
         Docker["🐳 Docker Daemon"]:::docker
-        Sandbox["📦 Ephemeral Container<br/>(python:3.9-slim)"]:::docker
-        Limits{{"⚠️ Hardware Kill-Switch:<br/>512MB RAM | 10s Timeout"}}:::db
+        Sandbox["📦 Ephemeral Container<br>python 3.9 slim"]:::docker
+        Limits["⚠️ Hardware Kill-Switch<br>512MB RAM and 10s Timeout"]:::db
         Docker --- Sandbox
         Sandbox --- Limits
     end
 
     %% External Internet
-    Internet(("🌐 Open Internet<br/>(Web Scraping APIs)")):::network
+    Internet["🌐 Open Internet<br>Web Scraping APIs"]:::network
 
     %% Flow Connections
     User -->|Initiates Mission| UI
-    UI -->|POST /api/solve| API
+    UI -->|POST Request| API
     API -->|Triggers Workflow| Dev
     
     %% RAG Injections
-    VectorDB -.->|Injects Company Policies| Dev
+    VectorDB -.->|Injects Policies| Dev
     VectorDB -.->|Injects Audit Rules| QA
     
     %% Execution Path
-    QA ==>|APPROVES Code| Docker
-    Sandbox -.->|HTTP GET (Fetching Data)| Internet
-    Internet -.->|Returns HTML/JSON| Sandbox
+    QA ==>|Approves Code| Docker
+    Sandbox -.->|HTTP GET Request| Internet
+    Internet -.->|Returns HTML Data| Sandbox
     
     %% Telemetry & History Path
-    Sandbox ==>|Returns Telemetry & Output| API
+    Sandbox ==>|Returns Telemetry| API
     API -->|Saves Successful Run| HistoryDB
     API -->|Streams Live Logs| UI
 ```
