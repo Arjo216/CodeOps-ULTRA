@@ -70,6 +70,73 @@ CodeOps ULTRA operates on a strict **Defense-in-Depth** model:
 
 ---
 
+### 🏗️ System Architecture
+```mermaid
+graph TD
+    %% Custom Cyberpunk/Enterprise Styles
+    classDef client fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef gateway fill:#1e1b4b,stroke:#8b5cf6,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef agent fill:#022c22,stroke:#10b981,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef db fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef docker fill:#082f49,stroke:#0ea5e9,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef network fill:#171717,stroke:#a3a3a3,stroke-width:2px,color:#fff,stroke-dasharray: 5 5,rx:8px,ry:8px
+
+    %% Client Layer
+    User(("🧑‍💻 User Input\n(Prompt & CSV)")):::client
+    UI["🖥️ Next.js Mission Control\n(React / Tailwind)"]:::client
+
+    %% API Gateway
+    API["⚡ FastAPI Gateway\n(uvicorn / REST)"]:::gateway
+
+    %% Cognitive / Multi-Agent Layer
+    subgraph Cognitive["🧠 Multi-Agent Orchestration (LangGraph)"]
+        direction LR
+        Dev["👨‍💻 Developer Agent\n(Llama 3.3 70B)"]:::agent
+        QA["🕵️‍♂️ QA Auditor Agent\n(Security Review)"]:::agent
+        Dev -->|Submits Code| QA
+        QA -.->|Rejects Code| Dev
+    end
+
+    %% RAG & Memory Storage
+    subgraph Storage["🗄️ Zero-Trust Storage & Memory"]
+        direction TB
+        VectorDB[("🗂️ Vector DB\n(PostgreSQL + pgvector)")]:::db
+        HistoryDB[("📜 Audit History Vault\n(PostgreSQL)")]:::db
+    end
+
+    %% Hardened Execution Environment
+    subgraph Execution["🏗️ Secure Execution Engine"]
+        direction TB
+        Docker["🐳 Docker Daemon"]:::docker
+        Sandbox["📦 Ephemeral Container\n(python:3.9-slim)"]:::docker
+        Limits>["⚠️ Hardware Kill-Switch:\n512MB RAM | 10s Timeout"]:::db
+        Docker --- Sandbox
+        Sandbox --- Limits
+    end
+
+    %% External Internet
+    Internet(("🌐 Open Internet\n(Web Scraping APIs)")):::network
+
+    %% Flow Connections
+    User -->|Initiates Mission| UI
+    UI -->|POST /api/solve| API
+    API -->|Triggers Workflow| Dev
+    
+    %% RAG Injections
+    VectorDB -.->|Injects Company Policies| Dev
+    VectorDB -.->|Injects Audit Rules| QA
+    
+    %% Execution Path
+    QA ==>|APPROVES Code| Docker
+    Sandbox -.->|HTTP GET (Fetching Data)| Internet
+    Internet -.->|Returns HTML/JSON| Sandbox
+    
+    %% Telemetry & History Path
+    Sandbox ==>|Returns Telemetry & Output| API
+    API -->|Saves Successful Run| HistoryDB
+    API -->|Streams Live Logs| UI
+```
+---
 ## 📥 Installation & Setup
 
 ### 1. Prerequisites
