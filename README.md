@@ -71,6 +71,7 @@ CodeOps ULTRA operates on a strict **Defense-in-Depth** model:
 ---
 
 ### 🏗️ System Architecture
+
 ```mermaid
 graph TD
     %% Custom Cyberpunk/Enterprise Styles
@@ -137,6 +138,7 @@ graph TD
     API -->|Streams Live Logs| UI
 ```
 ---
+
 ## 📥 Installation & Setup
 
 ### 1. Prerequisites
