@@ -1,7 +1,9 @@
+// frontend/src/app/page.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import Link from "next/link";
 import { 
   Play, 
   TerminalSquare, 
@@ -11,10 +13,12 @@ import {
   FileSpreadsheet, 
   X, 
   History as HistoryIcon, 
-  Clock 
+  Clock,
+  Bot
 } from "lucide-react";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-// Define interface for History Items
 interface HistoryItem {
   id: number;
   task: string;
@@ -33,6 +37,7 @@ export default function MissionControl() {
   const [showHistory, setShowHistory] = useState(false);
   
   const [dataset, setDataset] = useState<string | null>(null);
+  const [language, setLanguage] = useState("python"); // <-- NEW Polyglot State
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -45,7 +50,6 @@ export default function MissionControl() {
       const res = await axios.get("/api/history");
       if (!res.data.error) setHistory(res.data);
     } catch { 
-      // Removed the unused '_e' parameter to fix the ESLint warning
       console.error("History fetch failed"); 
     }
   };
@@ -64,17 +68,19 @@ export default function MissionControl() {
   const runAgent = async () => {
     if (!task && !dataset) return;
     setIsLoading(true);
-    setCode("# Agent is auditing and verifying code...");
-    setLogs(["Starting CodeOps ULTRA Agent..."]);
+    setCode(`# Agent is auditing and verifying ${language} code...`);
+    setLogs([`Starting CodeOps ULTRA Agent [Runtime: ${language}]...`]);
 
     try {
-      const response = await axios.post("/api/solve", { task, dataset });
+      // Send the language preference to the backend!
+      const response = await axios.post("/api/solve", { task, dataset, language });
       setCode(response.data.code);
       setLogs((prev) => [...prev, ...response.data.logs, `Success in ${response.data.attempts} attempts.`]);
       fetchHistory(); 
     } catch (error) {
       const errorMsg = axios.isAxiosError(error) ? error.message : "Unknown error";
       setLogs((prev) => [...prev, "❌ API Error: " + errorMsg]);
+      setCode("# Execution Failed. Check logs.");
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +88,6 @@ export default function MissionControl() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 p-6 font-sans">
-      {/* Header */}
       <header className="flex items-center justify-between border-b border-gray-800 pb-4 mb-6">
         <div className="flex items-center gap-3">
           <ShieldCheck className="w-8 h-8 text-cyan-400" />
@@ -95,17 +100,21 @@ export default function MissionControl() {
             </span>
           </div>
         </div>
-        <button 
-          onClick={() => setShowHistory(!showHistory)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 hover:border-cyan-500 transition-all text-sm"
-        >
-          <HistoryIcon className="w-4 h-4" /> Audit History
-        </button>
+        
+        <div className="flex items-center gap-3">
+          <Link href="/assistant" className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-900/20 border border-violet-700/50 hover:border-violet-400 transition-all text-sm text-violet-300">
+            <Bot className="w-4 h-4" /> ULTRA Assistant
+          </Link>
+          <button 
+            onClick={() => setShowHistory(!showHistory)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 hover:border-cyan-500 transition-all text-sm"
+          >
+            <HistoryIcon className="w-4 h-4" /> Audit History
+          </button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[80vh] relative">
-        
-        {/* History Drawer */}
         {showHistory && (
           <div className="absolute right-0 top-0 bottom-0 w-80 bg-gray-900 border-l border-gray-800 z-50 p-4 shadow-2xl overflow-y-auto animate-in slide-in-from-right">
             <div className="flex justify-between items-center mb-6">
@@ -128,7 +137,6 @@ export default function MissionControl() {
           </div>
         )}
 
-        {/* Control Panel */}
         <div className="lg:col-span-4 flex flex-col gap-6">
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col">
             <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
@@ -137,11 +145,29 @@ export default function MissionControl() {
             <textarea
               className="w-full bg-gray-950 border border-gray-700 rounded-lg p-3 text-sm focus:outline-none focus:border-cyan-500 transition-colors resize-none mb-3"
               rows={4}
-              placeholder="e.g., Scrape Google News..."
+              placeholder={`e.g., Write a ${language === 'python' ? 'web scraper' : 'REST API'}...`}
               value={task}
               onChange={(e) => setTask(e.target.value)}
             />
             
+            {/* NEW: Polyglot Language Selector */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs font-bold text-gray-500 uppercase">Runtime:</span>
+              <select 
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="flex-1 bg-gray-950 border border-gray-700 text-gray-300 text-sm rounded-lg p-2 focus:outline-none focus:border-cyan-500"
+              >
+                <option value="python">🐍 Python 3.11</option>
+                <option value="javascript">⚡ Node.js (JavaScript)</option>
+                <option value="c">🛠️ C (GCC)</option>
+                <option value="cpp">⚙️ C++ (GCC)</option>
+                <option value="rust">🦀 Rust</option>
+                <option value="go">🐹 Go</option>
+                <option value="java">☕ Java 21</option>
+              </select>
+            </div>
+
             <input type="file" accept=".csv" ref={fileInputRef} className="hidden" onChange={handleCsvUpload} />
             <button 
               onClick={() => dataset ? setDataset(null) : fileInputRef.current?.click()}
@@ -160,7 +186,6 @@ export default function MissionControl() {
             </button>
           </div>
 
-          {/* Audit Logs */}
           <div className="bg-black border border-gray-800 rounded-xl p-4 flex-1 flex flex-col overflow-hidden">
             <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
               <Code2 className="w-4 h-4" /> Live Telemetry
@@ -169,32 +194,37 @@ export default function MissionControl() {
               {logs.map((log, idx) => (
                 <div key={idx} className="mb-1">
                   <span className="text-gray-700">[{mounted ? new Date().toLocaleTimeString() : "00:00"}]</span>{" "}
-                  <span className={log.includes("Success") ? "text-green-400" : log.includes("Error") ? "text-red-400" : "text-cyan-400"}>{log}</span>
+                  <span className={log.includes("Success") ? "text-green-400" : log.includes("Error") || log.includes("❌") ? "text-red-400" : "text-cyan-400"}>{log}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Code View */}
-        <div className="lg:col-span-8 bg-[#1e1e1e] border border-gray-800 rounded-xl overflow-hidden flex flex-col">
-          <div className="bg-gray-900 border-b border-gray-800 p-2 px-4 flex items-center justify-between">
-            <span className="text-[10px] font-mono text-gray-500">verified_solution.py</span>
+        <div className="lg:col-span-8 bg-[#1e1e1e] border border-gray-800 rounded-xl overflow-hidden flex flex-col relative">
+          <div className="bg-gray-900 border-b border-gray-800 p-2 px-4 flex items-center justify-between z-10 relative">
+            {/* Dynamically update the extension! */}
+            <span className="text-[10px] font-mono text-gray-500">
+              verified_solution.{language === 'javascript' ? 'js' : 'py'}
+            </span>
             <div className="flex gap-1">
               <div className="w-2 h-2 rounded-full bg-red-500/50"></div>
               <div className="w-2 h-2 rounded-full bg-yellow-500/50"></div>
               <div className="w-2 h-2 rounded-full bg-green-500/50"></div>
             </div>
           </div>
-          <div className="flex-1 bg-[#1e1e1e] relative">
-            <textarea
-              readOnly
-              value={code}
-              className="w-full h-full bg-transparent text-gray-300 p-4 font-mono text-sm resize-none focus:outline-none scrollbar-hide"
-              spellCheck={false}
-            />
-            {!code.startsWith("#") && (
-              <div className="absolute top-2 right-4 px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-[10px] text-green-400 font-bold uppercase tracking-widest pointer-events-none">
+          
+          <div className="flex-1 bg-[#1e1e1e] overflow-auto scrollbar-hide">
+            <SyntaxHighlighter 
+              language={language === 'javascript' ? 'javascript' : 'python'} 
+              style={vscDarkPlus}
+              customStyle={{ background: 'transparent', margin: 0, padding: '1rem', fontSize: '0.875rem', height: '100%' }}
+            >
+              {code}
+            </SyntaxHighlighter>
+
+            {(!code.includes("Your AI-verified code") && !code.includes("Agent is auditing") && !code.includes("Execution Failed")) && (
+              <div className="absolute top-12 right-6 px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-[10px] text-green-400 font-bold uppercase tracking-widest pointer-events-none">
                 Verified Safe
               </div>
             )}
