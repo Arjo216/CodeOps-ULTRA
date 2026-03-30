@@ -38,7 +38,7 @@ LANGUAGE_CONFIG = {
         "command": "timeout 10 go run script.go"
     },
     "java": {
-        "image": "openjdk:21-jdk-slim",
+        "image": "eclipse-temurin:21-jdk",
         "ext": ".java",
         "command": "timeout 15 sh -c 'mv script.java Main.java && javac Main.java && java Main'"
     }

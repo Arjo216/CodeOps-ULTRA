@@ -97,12 +97,18 @@ def write_code(state: AgentState):
     
     code = response.content.replace(f"```{lang}", "").replace("```python", "").replace("```javascript", "").replace("```", "").strip()
     
-    # --- NEW: Programmatic Watermarking ---
+   # --- NEW: Programmatic Watermarking ---
     # Auto-detect the correct comment syntax for the requested language
     comment_symbol = "//" if lang.lower() in ["c", "cpp", "java", "javascript", "rust", "go"] else "#"
+    
+    # NEW FIX: If the RAG forced a Python '#' comment into a Java/C file, replace it with the correct symbol!
+    if lang.lower() != "python":
+        code = code.replace("# Verified by CodeOps ULTRA", f"{comment_symbol} Verified by CodeOps ULTRA")
+        code = code.replace("# Verified by", f"{comment_symbol} Verified by")
+
     watermark = f"{comment_symbol} Verified by CodeOps ULTRA Enterprise Edition\n\n"
     
-    # Force the header into the code if the AI forgot it
+    # Force the header into the code if the AI forgot it completely
     if "Verified by CodeOps ULTRA" not in code:
         code = watermark + code
 
@@ -121,7 +127,7 @@ def qa_review(state: AgentState):
     POLICIES TO ENFORCE:
     {retrieved}
     
-    Reply EXACTLY with the word 'APPROVED' if the code is safe and follows policy.
+    If the code is safe and follows policy, your response MUST START with the word 'APPROVED'. Do not write anything before it.
     Otherwise, explain why it must be REJECTED.
     """
     

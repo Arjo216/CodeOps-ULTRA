@@ -111,6 +111,15 @@ export default function MissionControl() {
           >
             <HistoryIcon className="w-4 h-4" /> Audit History
           </button>
+          <Link 
+  href="/pr-audits" 
+  className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm transition-colors text-gray-300 hover:text-white"
+>
+  <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+  </svg>
+  PR Audits
+</Link>
         </div>
       </header>
 
