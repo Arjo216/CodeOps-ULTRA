@@ -1,3 +1,4 @@
+# backend/agent_brain.py
 import os
 import psycopg2
 import hashlib
@@ -13,9 +14,11 @@ from sandbox_engine import UltraSandbox
 
 load_dotenv()
 
+# 1. UPGRADED STATE: Added 'language' to the State tracker
 class AgentState(TypedDict):
     task: str
     dataset: Optional[str]
+    language: str 
     code: str
     qa_feedback: str
     logs: List[str]
@@ -28,12 +31,7 @@ llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
 def save_to_history(task: str, code: str, logs: List[str]):
     """Saves a successful run and its security audit trail to the history table."""
     try:
-        conn = psycopg2.connect(
-            host="127.0.0.1", 
-            database="codeops_memory", 
-            user="ultra_admin", 
-            password="ultra_secure_password"
-        )
+        conn = psycopg2.connect(os.getenv("DATABASE_URL")) # Updated to use the .env variable dynamically!
         cur = conn.cursor()
         cur.execute("INSERT INTO task_history (task, code, logs) VALUES (%s, %s, %s)", (task, code, logs))
         conn.commit()
@@ -53,12 +51,7 @@ def get_retrieved_docs(query: str):
     """Searches the Vector DB for relevant company security policies."""
     try:
         vector = get_offline_embedding(query)
-        conn = psycopg2.connect(
-            host="127.0.0.1", 
-            database="codeops_memory", 
-            user="ultra_admin", 
-            password="ultra_secure_password"
-        )
+        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
         register_vector(conn)
         cur = conn.cursor()
         # Explicit type cast to ::vector is required for pgvector distance math
@@ -73,11 +66,13 @@ def get_retrieved_docs(query: str):
 
 def write_code(state: AgentState):
     attempt = state["attempts"]
-    print(f"👨‍💻 Developer Generating (Attempt {attempt+1})...")
+    lang = state["language"]
+    print(f"👨‍💻 Polyglot Developer Generating {lang.upper()} (Attempt {attempt+1})...")
     
     retrieved = get_retrieved_docs(state['task'])
     knowledge = f"\nCRITICAL COMPANY POLICIES (MANDATORY):\n{retrieved}\n" if retrieved else ""
 
+    # 2. UPGRADED PROMPT: Dynamically targets the requested language
     prompt = f"""
     Task: {state['task']}
     
@@ -88,19 +83,29 @@ def write_code(state: AgentState):
 
     STRICT CONSTRAINTS: 
     1. MANDATORY: You MUST implement the 'CRITICAL COMPANY POLICIES' found in the RAG search.
-    2. WEB ACCESS: You ARE allowed to use 'requests' and 'bs4' for web scraping tasks.
-    3. NO EXFILTRATION: Never attempt to send system data (like /etc/passwd) to a URL.
-    4. NO input() functions. Use hardcoded or dynamic values.
+    2. NO EXFILTRATION: Never attempt to send system data (like /etc/passwd) to a URL.
+    3. NO input() or prompt() functions. Use hardcoded or dynamic values.
     
-    Return ONLY raw python code.
+    Return ONLY raw {lang} code. Do not wrap it in markdown blocks.
     """
     
+    # 3. UPGRADED SYSTEM PERSONA: It is now a Polyglot developer!
     response = llm.invoke([
-        SystemMessage(content="You are a Senior Python Developer at CodeOps ULTRA. You follow security policies and include mandatory headers."), 
+        SystemMessage(content=f"You are a Senior Polyglot Developer at CodeOps ULTRA. You write elite {lang} code. You follow security policies and include mandatory headers."), 
         HumanMessage(content=prompt)
     ])
     
-    code = response.content.replace("```python", "").replace("```", "").strip()
+    code = response.content.replace(f"```{lang}", "").replace("```python", "").replace("```javascript", "").replace("```", "").strip()
+    
+    # --- NEW: Programmatic Watermarking ---
+    # Auto-detect the correct comment syntax for the requested language
+    comment_symbol = "//" if lang.lower() in ["c", "cpp", "java", "javascript", "rust", "go"] else "#"
+    watermark = f"{comment_symbol} Verified by CodeOps ULTRA Enterprise Edition\n\n"
+    
+    # Force the header into the code if the AI forgot it
+    if "Verified by CodeOps ULTRA" not in code:
+        code = watermark + code
+
     return {"code": code, "attempts": attempt + 1}
 
 def qa_review(state: AgentState):
@@ -108,7 +113,7 @@ def qa_review(state: AgentState):
     retrieved = get_retrieved_docs(state['task'])
     
     prompt = f"""
-    Review this code for security, policy compliance, and accuracy:
+    Review this {state['language']} code for security, policy compliance, and accuracy:
     
     CODE:
     {state['code']}
@@ -126,22 +131,22 @@ def qa_review(state: AgentState):
     ])
     feedback = response.content.strip()
     
-    # Flexible parsing to handle chatty AI models
     is_approved = "APPROVED" in feedback[:20].upper()
     
     if is_approved:
-        return {"qa_feedback": "APPROVED", "logs": state["logs"] + ["🕵️‍♂️ QA Agent: Code verified against security policies. Approved."]}
+        return {"qa_feedback": "APPROVED", "logs": state["logs"] + [f"🕵️‍♂️ QA Agent: {state['language'].upper()} Code verified against security policies. Approved."]}
     return {"qa_feedback": feedback, "logs": state["logs"] + [f"🕵️‍♂️ QA Agent Rejected: {feedback}"]}
 
 def test_code(state: AgentState):
-    print("🧪 Sandbox Execution...")
+    print(f"🧪 Sandbox Execution [{state['language'].upper()}]...")
     sandbox = UltraSandbox()
     try:
         sandbox.start()
-        result = sandbox.run_code(state["code"], state.get("dataset"))
+        # 4. UPGRADED EXECUTION: Pass the language down to the Docker Router!
+        result = sandbox.run_code(state["code"], state.get("dataset"), state["language"])
+        
         if result["exit_code"] == 0:
-            # SAVE TO AUDIT HISTORY ON SUCCESS
-            save_to_history(state["task"], state["code"], state["logs"] + [f"💻 Success Output: {result['output']}"])
+            save_to_history(f"[{state['language'].upper()}] {state['task']}", state["code"], state["logs"] + [f"💻 Success Output: {result['output']}"])
             return {"logs": state["logs"] + [f"💻 Success: {result['output']}"], "status": "success"}
         return {"logs": state["logs"] + [f"💻 Error: {result['output']}"], "status": "error"}
     finally:
@@ -167,5 +172,15 @@ workflow.add_conditional_edges("test_code", lambda x: END if x["status"] == "suc
 
 app = workflow.compile()
 
-def solve(task: str, dataset: str = None):
-    return app.invoke({"task": task, "dataset": dataset, "attempts": 0, "logs": [], "status": "start", "code": "", "qa_feedback": ""})
+# 5. UPGRADED ENTRYPOINT: Accept the language from server_api.py
+def solve(task: str, dataset: str = None, language: str = "python"):
+    return app.invoke({
+        "task": task, 
+        "dataset": dataset, 
+        "language": language, # Initialize the new state variable!
+        "attempts": 0, 
+        "logs": [], 
+        "status": "start", 
+        "code": "", 
+        "qa_feedback": ""
+    })
