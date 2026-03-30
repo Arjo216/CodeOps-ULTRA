@@ -198,6 +198,7 @@ vsce package
 # Install the packaged extension directly into your local VS Code IDE
 code --install-extension codeops-ultra-0.0.1.vsix
 ```
+---
 
 ### 📋 Example Use Cases
 * **Secure Web Scraping:** Fetch news headlines or stock data without risking local system integrity.
