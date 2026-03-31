@@ -146,7 +146,8 @@ graph TD
 
     %% Routing
     Interfaces ==>|JSON Payloads| API
-    API ==>|Orchestrates| Cognitive
+    API ==>|Route: /solve| Cognitive
+    API ==>|Route: /review| FastReview["⚡ Standalone Code Review<br>(Groq Llama 3.3)"]:::agent
     API ==>|Logs Events| SQLite
     
     VectorDB -.->|Injects Policies| Dev
