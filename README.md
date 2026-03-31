@@ -47,17 +47,28 @@ CodeOps ULTRA is accessible through four distinct enterprise interfaces, all pow
 * **Enterprise UI:** A dark-mode, cyberpunk-themed Next.js 14 dashboard using Tailwind CSS.
 * **Live Observability:** View live execution telemetry, PR audit histories, and memory vault logs in real-time.
 
-### 4. ⚡ The Hacker's CLI
-* **Terminal Native:** A rich, interactive command-line interface built with `Typer` and `Rich` for developers who prefer the terminal.
-* **Polyglot Execution:** Request code generation and watch it compile inside Docker directly from your prompt.
+### 4. ⚡ The Hacker's CLI (Terminal Native)
+* **Rich Developer Experience:** A heavily stylized, rich, interactive command-line interface built with `Typer` and `Rich` for developers who prefer the terminal.
+* **Direct Sandbox Access:** Request polyglot code generation and watch the ephemeral Docker containers compile and stream standard output directly back to your terminal prompt.
+* **History Vault Access:** Query past successful executions and security audits without ever leaving the command line.
 
 ---
 
 ## 🛡️ The Cognitive & Security Core
 
-* **Multi-Agent Debates:** A LangGraph State-Graph where a Developer Agent and a strict QA Auditor Agent iteratively debate and refine code until it meets corporate security standards.
-* **Deterministic RAG:** Uses PostgreSQL + `pgvector` for offline, hash-based retrieval of security policies, immune to external API outages.
-* **Polyglot Docker Sandbox:** Code is executed in ephemeral `eclipse-temurin` (Java) or `python:slim` containers with a strict 10-second hardware kill-switch to prevent infinite loops and unauthorized exfiltration.
+CodeOps ULTRA features a **Dual-Mode Cognitive Core**, powered by Llama 3.3 70B via Groq, ensuring maximum security at both the pipeline and API levels:
+
+### 1. Dual-Mode Code Review Engine
+* **Integrated QA Auditor (LangGraph State-Machine):** A LangGraph State-Graph where a Developer Agent and a strict QA Auditor Agent iteratively debate and refine code until it meets corporate security standards. It Acts as the internal firewall. If the Developer Agent generates insecure code, the QA Auditor rejects it, explains the vulnerability, and forces an autonomous rewrite *before* the code is ever allowed inside the Docker Sandbox.
+* **Standalone Fast-Review API (`/api/v2/agent/review`):** A high-speed, stateless endpoint for immediate code auditing. Submit any raw code snippet, and the engine instantly returns a hyper-optimized, heavily commented, and secure version of the code alongside a bulleted vulnerability report. 
+
+### 2. Deterministic Memory & RAG
+* **Zero-Trust RAG:** Uses PostgreSQL + `pgvector` for offline, hash-based retrieval of corporate security policies, making the system immune to external API outages.
+* **Immutable Telemetry:** Every standalone review and automated PR audit is silently logged to PostgreSQL and SQLite databases for full organizational observability.
+
+### 3. Polyglot Docker Sandbox
+* Code is executed in ephemeral `eclipse-temurin` (Java) or `python:slim` containers.
+* Features a strict **10-second hardware kill-switch** and memory limits to prevent infinite loops, resource exhaustion, and unauthorized data exfiltration.
 
 ---
 
@@ -135,7 +146,11 @@ graph TD
 
     %% Routing
     Interfaces ==>|JSON Payloads| API
-    API ==>|Orchestrates| Cognitive
+    %% Routing
+    Interfaces ==>|JSON Payloads| API
+    API ==>|Route: /solve| Cognitive
+    API ==>|Route: /review| FastReview["⚡ Standalone Code Review<br>(Groq Llama 3.3)"]:::agent
+    API ==>|Logs Events| SQLite
     API ==>|Logs Events| SQLite
     
     VectorDB -.->|Injects Policies| Dev
